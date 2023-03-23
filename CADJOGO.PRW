@@ -4,7 +4,7 @@
 /*/{Protheus.doc} User Function CADJOGO
     Rotina para cadastro em MVC de jogos do usuário
     @type  Function
-    @author Edison Cake
+    @author Edison Cake & Pintor
     @since 21/03/2023
     /*/
 User Function CADJOGO() 
@@ -45,33 +45,49 @@ Return aRotina
 Static Function ModelDef()
     local oModel    := MPFormModel():New("CADJOGO_M")
     local oStruZZJ  := FWFormStruct(1, "ZZJ")
+    local oStruZZK  := FwFormStruct(1, "ZZK")
 
     local bMessage  := { |oModel| ActOpt(oModel), .T. }
 
     oModel:AddFields("ZZJMASTER",,oStruZZJ)
     oModel:SetDescription("Cadastro de Jogos")
 
-    oModel:SetPrimaryKey({"ZZJ_COD"})
+    oModel:AddGrid("ZZKDETAIL", "ZZJMASTER", oStruZZK)
+    oModel:GetModel("ZZKDETAIL"):SetDescription("Detalhes Adicionais")
+
+    oModel:SetRelation('ZZKDETAIL', {{'ZZK_FILIAL', 'xFilial("ZZK")'}, {"ZZK_COD", "ZZJ_COD"}}, ZZK->(IndexKey(1)))
+
+    oModel:SetPrimaryKey({"ZZJ_COD", "ZZK_COD"})
+
     oModel:SetVldActivate(bMessage)
+
+    oModel:GetModel('ZZKDETAIL'):SetUniqueLine({"ZZK_VERPLA"})
 Return oModel
 
 Static Function ViewDef()
     local oModel    := FwLoadModel('CADJOGO')
     local oStruZZJ  := FwFormStruct(2, "ZZJ")
+    local oStruZZK  := FwFormStruct(2, "ZZK")
     local oView     := FwFormView():New()
 
     oView:SetModel(oModel)
     oView:AddField("VIEW_ZZJ",  oStruZZJ,  "ZZJMASTER")
 
-    oView:CreateVerticalBox("JOGOS", 80)
-    oView:CreateVerticalBox("BOTOES", 20)
+    oView:AddGrid("VIEW_ZZK", oStruZZK, "ZZKDETAIL")
+
+    oView:CreateHorizontalBox("JOGOS", 50)
+    oView:CreateVerticalBox("ESQUERDA", 80, "JOGOS")
+    oView:CreateVerticalBox("DIREITA", 20, "JOGOS")
+    oView:CreateHorizontalBox("DADOS", 50)
 
     oView:SetOwnerView("VIEW_ZZJ",  "JOGOS")
+    oView:SetOwnerView("VIEW_ZZK",  "DADOS")
 
     oView:EnableTitleView("VIEW_ZZJ",  "Cadastro de Jogos")
+    oView:EnableTitleView("VIEW_ZZK",  "Informações Adicionais de Jogos")
 
     oView:AddOtherObjects("Motivacional", { |oPanel| Motiv(oPanel) })
-    oView:SetOwnerView('Motivacional', 'BOTOES')
+    oView:SetOwnerView('Motivacional', 'JOGOS')
 Return oView
 
 User Function zOpcoes()
